@@ -10,22 +10,23 @@ namespace Diary.Controllers
 {
 	public class DiaryController : Controller
 	{
-		private static List<DiaryEntryModel> entries = new()
+		private readonly DiaryEntryContext _context;
+
+		public DiaryController(DiaryEntryContext context)
 		{
-			new() { Id = 1, Title = "Title1", Content = "Content1", Day = 5 },
-			new() { Id = 2, Title = "Title2", Content = "Content2", Day = 13 },
-		};
+			_context = context;
+		}
 
 		// GET: Diary
 		public ActionResult Index()
 		{
-			return View(entries);
+			return View(_context.GetAllEntries());
 		}
 
 		// GET: Diary/Details/5
 		public ActionResult Details(int id)
 		{
-			return View(entries.FirstOrDefault(x => x.Id == id));
+			return View(_context.Get(id));
 		}
 
 		// GET: Diary/Create
@@ -39,16 +40,18 @@ namespace Diary.Controllers
 		[ValidateAntiForgeryToken]
 		public ActionResult Create(DiaryEntryModel entry)
 		{
-			entry.Id = entries.Count + 1;
-			entry.Day = DateTime.Today.DayOfYear;
-			entries.Add(entry);
-			return RedirectToAction(nameof(Index));
+			if (ModelState.IsValid)
+			{
+				_context.Add(entry);
+				return RedirectToAction(nameof(Index));
+			}
+			return View(entry);
 		}
 
 		// GET: Diary/Delete/5
 		public ActionResult Delete(int id)
 		{
-			return View(entries.FirstOrDefault(x => x.Id == id));
+			return View(_context.Get(id));
 		}
 
 		// POST: Diary/Delete/5
@@ -56,7 +59,7 @@ namespace Diary.Controllers
 		[ValidateAntiForgeryToken]
 		public ActionResult Delete(int id, DiaryEntryModel entry)
 		{
-			entries.Remove(entries.FirstOrDefault(x => x.Id == id));
+			_context.Delete(id);
 			return RedirectToAction(nameof(Index));
 		}
 	}
